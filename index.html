@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f6f7fb">
+    <title>To-Do List</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell mx-auto max-w-[1440px] px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
+      <header class="hero-panel mb-6 flex flex-col gap-8 md:mb-8 md:flex-row md:items-end md:justify-between">
+        <div class="hero-copy">
+          <p class="eyebrow mb-2">오늘도 차근차근</p>
+          <h1 class="mb-2 text-4xl font-bold sm:text-5xl">To-Do List</h1>
+          <p id="today-label" class="hero-date mb-0"></p>
+        </div>
+        <div class="hero-summary" aria-label="전체 할 일 현황">
+          <div class="summary-cell">
+            <span class="summary-label">전체 일정</span>
+            <strong id="total-tasks" class="summary-number">0</strong>
+          </div>
+          <div class="summary-divider" aria-hidden="true"></div>
+          <div class="summary-cell">
+            <span class="summary-label">완료</span>
+            <strong id="completed-tasks" class="summary-number">0</strong>
+          </div>
+        </div>
+      </header>
+
+      <div id="feedback" class="feedback-message hidden" role="alert" aria-live="polite"></div>
+
+      <section class="surface-card add-card mb-5" aria-labelledby="form-heading">
+        <div class="section-heading mb-5">
+          <div>
+            <p class="eyebrow mb-1">NEW TASK</p>
+            <h2 id="form-heading" class="text-xl font-bold sm:text-2xl">할 일 추가</h2>
+          </div>
+          <span class="heading-mark" aria-hidden="true">＋</span>
+        </div>
+
+        <form id="todo-form" novalidate>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="md:col-span-2 xl:col-span-4">
+              <label for="task-title" class="form-label mb-1.5 block">할 일 제목</label>
+              <input
+                id="task-title"
+                name="title"
+                class="field-control field-control-large"
+                type="text"
+                maxlength="100"
+                placeholder="예: 수학 문제집 3쪽 풀기"
+                autocomplete="off"
+                required
+              >
+              <div class="form-hint mt-1.5">최대 100자까지 입력할 수 있어요.</div>
+            </div>
+            <div>
+              <label for="task-date" class="form-label mb-1.5 block">일정 날짜</label>
+              <input id="task-date" name="date" class="field-control" type="date" required>
+            </div>
+            <div>
+              <label for="task-due-date" class="form-label mb-1.5 block">마감 기한 <span class="optional-label">선택</span></label>
+              <input id="task-due-date" name="dueDate" class="field-control" type="date">
+            </div>
+            <div>
+              <label for="task-category" class="form-label mb-1.5 block">카테고리</label>
+              <select id="task-category" name="categoryId" class="field-control"></select>
+            </div>
+            <div>
+              <label for="task-repeat" class="form-label mb-1.5 block">반복</label>
+              <select id="task-repeat" name="repeatType" class="field-control">
+                <option value="none">반복 없음</option>
+                <option value="daily">매일</option>
+                <option value="weekly">매주</option>
+              </select>
+            </div>
+            <fieldset id="weekly-days-field" class="hidden md:col-span-2 xl:col-span-4">
+              <legend class="form-label mb-2">반복할 요일</legend>
+              <div id="weekly-days" class="weekday-picker"></div>
+            </fieldset>
+          </div>
+          <div class="form-actions mt-5">
+            <button id="cancel-edit" class="button button-muted hidden" type="button">수정 취소</button>
+            <button id="submit-task" class="button button-primary px-5" type="submit">일정 추가</button>
+          </div>
+        </form>
+      </section>
+
+      <main class="grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-6">
+        <aside class="space-y-5 lg:col-span-4">
+          <section class="surface-card" aria-labelledby="progress-heading">
+            <div class="section-heading mb-4">
+              <div>
+                <p class="eyebrow mb-1">YOUR PROGRESS</p>
+                <h2 id="progress-heading" class="text-lg font-bold">전체 진행률</h2>
+              </div>
+              <strong id="progress-percent" class="progress-percent">0%</strong>
+            </div>
+            <div
+              class="progress-track"
+              role="progressbar"
+              aria-label="전체 일정 진행률"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <div id="overall-progress-bar" class="progress-fill"></div>
+            </div>
+            <p id="progress-count" class="muted-copy mb-5 mt-2 text-sm">0 / 0개 완료</p>
+            <h3 class="mb-3 text-sm font-bold">카테고리별 진행률</h3>
+            <div id="category-progress" class="category-progress-list"></div>
+          </section>
+
+          <section class="surface-card" aria-labelledby="categories-heading">
+            <div class="section-heading mb-4">
+              <div>
+                <p class="eyebrow mb-1">ORGANIZE</p>
+                <h2 id="categories-heading" class="text-lg font-bold">카테고리</h2>
+              </div>
+            </div>
+            <div id="category-list" class="category-list mb-4"></div>
+            <form id="category-form" class="category-form">
+              <label for="category-name" class="form-label mb-1.5 block">카테고리 이름</label>
+              <div class="flex gap-2">
+                <input
+                  id="category-name"
+                  class="field-control min-w-0 flex-1"
+                  type="text"
+                  maxlength="30"
+                  placeholder="카테고리 이름"
+                  autocomplete="off"
+                  required
+                >
+                <input
+                  id="category-color"
+                  class="color-control"
+                  type="color"
+                  value="#6c63ff"
+                  title="카테고리 색상"
+                  aria-label="카테고리 색상"
+                >
+              </div>
+              <div class="form-actions mt-3">
+                <button id="cancel-category-edit" class="button button-muted button-small hidden" type="button">취소</button>
+                <button id="submit-category" class="button button-outline button-small" type="submit">카테고리 추가</button>
+              </div>
+            </form>
+          </section>
+        </aside>
+
+        <section class="lg:col-span-8" aria-labelledby="tasks-heading">
+          <div class="surface-card task-card">
+            <div class="section-heading task-list-heading mb-5">
+              <div>
+                <p class="eyebrow mb-1">TASK BOARD</p>
+                <h2 id="tasks-heading" class="text-xl font-bold sm:text-2xl">일정 목록</h2>
+              </div>
+              <label class="sr-only" for="task-filter">일정 필터</label>
+              <select id="task-filter" class="field-control filter-select">
+                <option value="all">전체 일정</option>
+                <option value="today">오늘의 일정</option>
+                <option value="upcoming">예정된 일정</option>
+                <option value="overdue">기한 초과</option>
+                <option value="completed">완료된 일정</option>
+                <option value="incomplete">미완료 일정</option>
+              </select>
+            </div>
+            <div class="filter-summary mb-4 flex items-center justify-between gap-3">
+              <p id="active-filter-label" class="muted-copy text-sm">모든 카테고리</p>
+              <button id="reset-filters" class="text-link shrink-0 text-sm" type="button">필터 초기화</button>
+            </div>
+            <div id="task-list" class="task-list" aria-live="polite"></div>
+          </div>
+        </section>
+      </main>
+      <footer class="app-footer mt-6 text-center text-sm lg:mt-8">
+        <p>내 일정은 이 브라우저에 저장돼요.</p>
+      </footer>
+    </div>
+  </body>
+</html>
