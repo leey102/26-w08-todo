@@ -180,5 +180,32 @@
         <p>내 일정은 이 브라우저에 저장돼요.</p>
       </footer>
     </div>
+
+    <dialog id="confirmation-dialog" class="confirmation-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-message">
+      <div class="confirmation-content">
+        <div class="confirmation-art" aria-hidden="true">
+          <svg viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="48" cy="48" r="43" fill="#F5E7B2"/>
+            <path d="M48 8 54 22 68 11 67 28 85 25 77 40 92 48 77 56 85 71 67 68 68 85 54 74 48 89 42 74 28 85 29 68 11 71 19 56 4 48 19 40 11 25 29 28 28 11 42 22 48 8Z" fill="#D4A437"/>
+            <path d="M48 19 54 34 69 29 63 43 78 48 63 54 69 68 54 63 48 78 42 63 27 68 33 54 18 48 33 43 27 29 42 34 48 19Z" fill="#FFF8DF"/>
+            <path d="M38 39c2-4 7-6 12-5 7 1 12 7 12 14 0 5-2 9-6 12l-1 12c0 3-3 5-6 5s-6-2-6-5l-1-10c-7-3-11-10-9-17 1-3 2-5 5-6Z" fill="#53434A"/>
+            <path d="M39 46c3 2 7 2 10 0m5-1 5 1" stroke="#F7D9A0" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M47 49c-1 4-2 6-4 8 2 2 5 2 8 1" stroke="#E6B96B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M42 61c3-2 7-2 10 0" stroke="#D99574" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M38 82 31 90m27-8 7 8" stroke="#A97724" stroke-width="4" stroke-linecap="round"/>
+            <path d="m18 19 4 4m52 49 4 4M76 19l-4 4M22 72l-4 4" stroke="#FFF8DF" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="confirmation-copy">
+          <p class="eyebrow mb-1">ONE LAST LOOK</p>
+          <h2 id="confirmation-title">정말 삭제할까요?</h2>
+          <p id="confirmation-message"></p>
+        </div>
+        <div class="confirmation-actions">
+          <button id="confirmation-cancel" class="button button-muted" type="button">취소</button>
+          <button id="confirmation-confirm" class="button button-danger" type="button">삭제할게요</button>
+        </div>
+      </div>
+    </dialog>
   </body>
 </html>

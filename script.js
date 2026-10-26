@@ -41,7 +41,12 @@ const elements = {
   categoryName: document.getElementById("category-name"),
   categoryColor: document.getElementById("category-color"),
   categorySubmit: document.getElementById("submit-category"),
-  cancelCategoryEdit: document.getElementById("cancel-category-edit")
+  cancelCategoryEdit: document.getElementById("cancel-category-edit"),
+  confirmationDialog: document.getElementById("confirmation-dialog"),
+  confirmationTitle: document.getElementById("confirmation-title"),
+  confirmationMessage: document.getElementById("confirmation-message"),
+  confirmationCancel: document.getElementById("confirmation-cancel"),
+  confirmationConfirm: document.getElementById("confirmation-confirm")
 };
 
 let state = createInitialState();
@@ -49,6 +54,7 @@ let selectedCategoryId = "";
 let editingTaskId = "";
 let editingCategoryId = "";
 let weeklyDaysCustomized = false;
+let pendingConfirmation = null;
 
 function createInitialState() {
   return { tasks: [], categories: DEFAULT_CATEGORIES.map((category) => ({ ...category })), recurrenceCompletions: {} };
@@ -503,7 +509,7 @@ function createTaskElement(task, occurrence, today) {
   checkbox.className = "task-check";
   checkbox.checked = completed;
   checkbox.setAttribute("aria-label", `${task.text} ${completed ? "완료 취소" : "완료"}`);
-  checkbox.addEventListener("change", () => toggleTask(task, occurrence, checkbox.checked));
+  checkbox.addEventListener("change", () => toggleTask(task, occurrence, checkbox.checked, checkbox));
 
   const main = document.createElement("div");
   main.className = "task-main";
@@ -730,7 +736,7 @@ function handleTaskSubmit(event) {
   }
 }
 
-function toggleTask(task, dateValue, completed) {
+function toggleTask(task, dateValue, completed, checkbox) {
   task.updatedAt = new Date().toISOString();
   if (isRecurring(task)) {
     if (!state.recurrenceCompletions[task.id]) state.recurrenceCompletions[task.id] = {};
@@ -738,20 +744,68 @@ function toggleTask(task, dateValue, completed) {
   } else {
     task.completed = completed;
   }
+  if (completed) showPetalEffect(checkbox);
   saveState();
   render();
 }
 
+function showPetalEffect(source) {
+  if (!source || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const bounds = source.getBoundingClientRect();
+  const burst = document.createElement("span");
+  burst.className = "petal-burst";
+  burst.setAttribute("aria-hidden", "true");
+  burst.style.left = `${bounds.left + bounds.width / 2}px`;
+  burst.style.top = `${bounds.top + bounds.height / 2}px`;
+  const petals = [
+    ["-28px", "-20px", "#f5a3c7"],
+    ["0px", "-34px", "#f7d36e"],
+    ["28px", "-20px", "#a9d99f"],
+    ["34px", "8px", "#f5a3c7"],
+    ["14px", "30px", "#c2a8f4"],
+    ["-14px", "30px", "#f7d36e"],
+    ["-34px", "8px", "#a9d99f"]
+  ];
+  for (const [x, y, color] of petals) {
+    const petal = document.createElement("span");
+    petal.className = "petal";
+    petal.style.setProperty("--petal-x", x);
+    petal.style.setProperty("--petal-y", y);
+    petal.style.setProperty("--petal-color", color);
+    burst.append(petal);
+  }
+  document.body.append(burst);
+  window.setTimeout(() => burst.remove(), 1000);
+}
+
+function openConfirmation({ title, message, confirmLabel = "삭제할게요", onConfirm }) {
+  pendingConfirmation = onConfirm;
+  elements.confirmationTitle.textContent = title;
+  elements.confirmationMessage.textContent = message;
+  elements.confirmationConfirm.textContent = confirmLabel;
+  elements.confirmationDialog.showModal();
+}
+
+function closeConfirmation() {
+  pendingConfirmation = null;
+  elements.confirmationDialog.close();
+}
+
 function deleteTask(task) {
   const message = isRecurring(task)
-    ? "이 반복 일정 전체와 날짜별 완료 기록을 모두 삭제할까요?"
-    : "이 일정을 삭제할까요?";
-  if (!window.confirm(message)) return;
-  state.tasks = state.tasks.filter((item) => item.id !== task.id);
-  delete state.recurrenceCompletions[task.id];
-  if (editingTaskId === task.id) resetTaskForm();
-  saveState();
-  render();
+    ? `‘${task.text}’ 반복 일정 전체와 날짜별 완료 기록을 모두 삭제할까요?`
+    : `‘${task.text}’ 일정을 삭제할까요?`;
+  openConfirmation({
+    title: isRecurring(task) ? "반복 일정을 삭제할까요?" : "일정을 삭제할까요?",
+    message,
+    onConfirm: () => {
+      state.tasks = state.tasks.filter((item) => item.id !== task.id);
+      delete state.recurrenceCompletions[task.id];
+      if (editingTaskId === task.id) resetTaskForm();
+      saveState();
+      render();
+    }
+  });
 }
 
 function resetCategoryForm() {
@@ -814,18 +868,23 @@ function handleCategorySubmit(event) {
 }
 
 function deleteCategory(category) {
-  if (!window.confirm(`‘${category.name}’ 카테고리를 삭제할까요? 해당 일정은 삭제되지 않고 미분류로 이동합니다.`)) return;
-  state.categories = state.categories.filter((item) => item.id !== category.id);
-  for (const task of state.tasks) {
-    if (task.categoryId === category.id) {
-      task.categoryId = "";
-      task.updatedAt = new Date().toISOString();
+  openConfirmation({
+    title: "카테고리를 삭제할까요?",
+    message: `‘${category.name}’ 카테고리를 삭제할까요? 해당 일정은 삭제되지 않고 미분류로 이동합니다.`,
+    onConfirm: () => {
+      state.categories = state.categories.filter((item) => item.id !== category.id);
+      for (const task of state.tasks) {
+        if (task.categoryId === category.id) {
+          task.categoryId = "";
+          task.updatedAt = new Date().toISOString();
+        }
+      }
+      if (selectedCategoryId === category.id) selectedCategoryId = "";
+      if (editingCategoryId === category.id) resetCategoryForm();
+      saveState();
+      render();
     }
-  }
-  if (selectedCategoryId === category.id) selectedCategoryId = "";
-  if (editingCategoryId === category.id) resetCategoryForm();
-  saveState();
-  render();
+  });
 }
 
 function startCategoryEditWithActions(category) {
@@ -870,6 +929,18 @@ function wireEvents() {
     resetCategoryForm();
     clearMessage();
     render();
+  });
+  elements.confirmationCancel.addEventListener("click", closeConfirmation);
+  elements.confirmationDialog.addEventListener("cancel", () => {
+    pendingConfirmation = null;
+  });
+  elements.confirmationDialog.addEventListener("click", (event) => {
+    if (event.target === elements.confirmationDialog) closeConfirmation();
+  });
+  elements.confirmationConfirm.addEventListener("click", () => {
+    const confirm = pendingConfirmation;
+    closeConfirmation();
+    if (confirm) confirm();
   });
 }
 

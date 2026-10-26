@@ -432,6 +432,7 @@ select {
 }
 
 .task-item {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: start;
@@ -606,6 +607,132 @@ select {
   color: var(--muted);
 }
 
+.petal-burst {
+  position: fixed;
+  z-index: 30;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.petal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.65rem;
+  height: 0.9rem;
+  border-radius: 100% 0 100% 0;
+  background: var(--petal-color);
+  opacity: 0;
+  animation: petal-float 850ms cubic-bezier(0.2, 0.7, 0.25, 1) forwards;
+}
+
+@keyframes petal-float {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35) rotate(-20deg);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--petal-x)), calc(-50% + var(--petal-y))) scale(1) rotate(145deg);
+  }
+}
+
+.confirmation-dialog {
+  width: min(28rem, calc(100% - 2rem));
+  max-width: none;
+  border: 1px solid rgb(233 235 243 / 90%);
+  border-radius: 1.35rem;
+  padding: 0;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 28px 90px rgb(32 36 58 / 24%);
+}
+
+.confirmation-dialog::backdrop {
+  background: rgb(27 27 42 / 56%);
+  backdrop-filter: blur(4px);
+}
+
+.confirmation-content {
+  display: grid;
+  justify-items: center;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.confirmation-art {
+  display: grid;
+  width: 6rem;
+  height: 6rem;
+  place-items: center;
+  margin-bottom: 1rem;
+  border-radius: 1.75rem;
+  background: linear-gradient(145deg, #fff8df, #f2dfaa);
+  box-shadow: inset 0 0 0 1px rgb(169 125 43 / 12%);
+}
+
+.confirmation-art svg {
+  width: 5.2rem;
+  height: 5.2rem;
+}
+
+.confirmation-copy h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 750;
+}
+
+.confirmation-copy > p:last-child {
+  margin: 0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.confirmation-actions {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+}
+
+.confirmation-actions .button {
+  min-width: 7rem;
+}
+
+.button-danger {
+  background: #c94f57;
+  color: #fff;
+}
+
+.button-danger:hover {
+  background: #ad3942;
+}
+
+.confirmation-dialog[open] {
+  animation: dialog-enter 180ms ease-out;
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @media (max-width: 640px) {
   .hero-summary {
     align-self: stretch;
@@ -629,5 +756,20 @@ select {
   .task-actions {
     grid-column: 2;
     justify-content: end;
+  }
+
+  .confirmation-content {
+    padding: 1.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
